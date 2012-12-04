@@ -7,36 +7,37 @@ function updateNavi($location, pageClass) {
 }
 
 /* Controllers */
-function DefaultCtrl($scope, $log, $location) {
+function DefaultCtrl($scope, $location) {
     updateNavi($location, 'page-link-help');
 }
-DefaultCtrl.$inject = ['$scope', '$log', '$location'];
+DefaultCtrl.$inject = ['$scope', '$location'];
 
-function FrontCtrl($location) {
+function FrontCtrl($scope, $location) {
     updateNavi($location, 'page-link-index');
 }
-FrontCtrl.$inject = ['$location'];
+FrontCtrl.$inject = ['$scope', '$location'];
 
-function MapCtrl($location) {
+function MapCtrl($scope, $location, mapService) {
     updateNavi($location, 'page-link-map');
+    mapService.open("map-canvas");
 }
-MapCtrl.$inject = ['$location'];
+MapCtrl.$inject = ['$scope', '$location', 'mapService'];
 
-function TrackersListCtrl($location) {
+function TrackersListCtrl($scope, $location) {
     updateNavi($location, 'page-link-trackers');
 }
-TrackersListCtrl.$inject = ['$location'];
+TrackersListCtrl.$inject = ['$scope', '$location'];
 
-function CreateTrackerCtrl($location) {
+function CreateTrackerCtrl($scope, $location) {
     updateNavi($location, 'page-link-trackers');
 }
-CreateTrackerCtrl.$inject = ['$location'];
+CreateTrackerCtrl.$inject = ['$scope', '$location'];
 
 function ErrorCtrl($scope) {}
 ErrorCtrl.$inject = [];
 
-function DebugCtrl($location) {
+function DebugCtrl($scope, $location) {
     updateNavi($location, 'page-link-trackers');
 }
-DebugCtrl.$inject = ['$location'];
+DebugCtrl.$inject = ['$scope', '$location'];
 
