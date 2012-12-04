@@ -7,4 +7,5 @@
 // In this case it is a simple value service.
 angular.module('ruuvitracker.services', []).
   value('version', '0.1').
-  value('mapService', new MapService());
+  value('mapService', new MapService()).
+  value('storageService', new StorageService());
