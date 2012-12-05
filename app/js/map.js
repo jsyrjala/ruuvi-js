@@ -89,7 +89,7 @@ var MapService = function() {
             updateSelfLocation(event.latlng, event.accuracy);
         });
         map.on("locationerror", function(event) {
-            console.log("location error", e);
+            console.log("location error", event);
         });
         var hour = 60 * 60;
         loadInitialLocation(map, startLocation, hour);

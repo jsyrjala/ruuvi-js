@@ -17,8 +17,9 @@ function FrontCtrl($scope, $location) {
 }
 FrontCtrl.$inject = ['$scope', '$location'];
 
-function MapCtrl($scope, $location, mapService, geoCodingService) {
+function MapCtrl($scope, $location, mapService, geoCodingService, soundService) {
     updateNavi($location, 'page-link-map');
+
     mapService.open("map-canvas");
     $scope.locate = function(address) {
         console.log("locate:", address);
@@ -39,6 +40,7 @@ function MapCtrl($scope, $location, mapService, geoCodingService) {
             var closest = sorted[0];
             var closestLoc = new L.LatLng(closest.lat, closest.lon);
             console.log("Show " + closest.display_name + " (" + closestLoc + ")");
+            soundService.playPing();
             if(closest.boundingbox) {
                 var sw = new L.LatLng(closest.boundingbox[0], closest.boundingbox[2])
                 var ne = new L.LatLng(closest.boundingbox[1], closest.boundingbox[3])
@@ -52,12 +54,12 @@ function MapCtrl($scope, $location, mapService, geoCodingService) {
         geoCodingService.searchLocation(address, showClosest);
     };
 }
-MapCtrl.$inject = ['$scope', '$location', 'mapService', 'geoCodingService'];
+MapCtrl.$inject = ['$scope', '$location', 'mapService', 'geoCodingService', 'soundService'];
 
-function TrackersListCtrl($scope, $location) {
+function TrackersListCtrl($scope, $location, soundService) {
     updateNavi($location, 'page-link-trackers');
 }
-TrackersListCtrl.$inject = ['$scope', '$location'];
+TrackersListCtrl.$inject = ['$scope', '$location', 'soundService'];
 
 function CreateTrackerCtrl($scope, $location) {
     updateNavi($location, 'page-link-trackers');
