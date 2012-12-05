@@ -122,6 +122,15 @@ var MapService = function() {
         return mapView.getCenter();
     }
 
+    /* Center location of map around latest user position (if
+       available) */
+    this.centerOnSelf = function() {
+        console.log("centerOnSelf:");
+        if(selfLocation) {
+            this.center(selfLocation, mapView.getZoom());
+        }
+    }
+
     /* Center map on given location */
     this.center = function(location, zoom) {
         console.log("center:" + location + "," + zoom);

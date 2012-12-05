@@ -21,8 +21,13 @@ function MapCtrl($scope, $location, mapService, geoCodingService, soundService) 
     updateNavi($location, 'page-link-map');
 
     mapService.open("map-canvas");
-    $scope.locate = function(address) {
-        console.log("locate:", address);
+    $scope.locateMe = function() {
+        console.log("locateMe:");
+        mapService.centerOnSelf();
+    };
+
+    $scope.searchAddress = function(address) {
+        console.log("searchAddress:", address);
         if(!address) {
             return;
         }
