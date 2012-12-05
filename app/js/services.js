@@ -8,4 +8,5 @@
 angular.module('ruuvitracker.services', []).
   value('version', '0.1').
   value('mapService', new MapService()).
-  value('storageService', new StorageService());
+  value('storageService', new StorageService()).
+  value('geoCodingService', new GeoCodingService());

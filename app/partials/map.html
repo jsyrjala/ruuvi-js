@@ -1,10 +1,16 @@
 <div class="container-fluid">
   <div class="row-fluid">
     <button id="locate-me" class="btn" title="Center map on my current location">Locate</button>
-    <button id="query" class="btn" title="Click this many times. Look at Lappeenranta.">Get location data</button>
-    <span id="location-search"></span>
+    <button id="query" class="btn" title="Click this many times. Look
+    at Lappeenranta.">Get location data</button>
+    <form class="search-form" ng-submit="locate(address)">
+      <input type="search" id="location-search" class="search-query"
+             size="20" maxlength="100" placeholder="Location search" 
+             title="Enter address here and map will show the location." 
+             ng-model="address"/>
+    </form>
     <div id="map-canvas" class="row-fluid">
-      Map
+      Map goes here
     </div>
   </div>
   

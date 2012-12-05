@@ -86,7 +86,6 @@ var MapService = function() {
         map.addLayer(tiles);
 
         map.on("locationfound", function(event) {
-            console.log(event);
             updateSelfLocation(event.latlng, event.accuracy);
         });
         map.on("locationerror", function(event) {
@@ -118,11 +117,22 @@ var MapService = function() {
         }
     };
     
+    /* Center location of current map view */
+    this.currentCenter = function() {
+        return mapView.getCenter();
+    }
+
     /* Center map on given location */
     this.center = function(location, zoom) {
         console.log("center:" + location + "," + zoom);
         mapView.setView(location, zoom || defaultZoom);
     };
+
+    /* Center map on give LatLngBounds object */
+    this.centerBounds = function(bounds) {
+        console.log("centerBounds:" + bounds);
+        mapView.fitBounds(bounds);
+    }
 
     /* Center map on current self location */
     this.locate = function() {

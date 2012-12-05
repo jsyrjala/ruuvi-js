@@ -17,11 +17,42 @@ function FrontCtrl($scope, $location) {
 }
 FrontCtrl.$inject = ['$scope', '$location'];
 
-function MapCtrl($scope, $location, mapService) {
+function MapCtrl($scope, $location, mapService, geoCodingService) {
     updateNavi($location, 'page-link-map');
     mapService.open("map-canvas");
+    $scope.locate = function(address) {
+        console.log("locate:", address);
+        if(!address) {
+            return;
+        }
+        // show result closest to current map location
+        // TODO improve, finds funny results
+        var showClosest = function(data) {
+            var currentLocation = mapService.currentCenter();
+            console.log("locate found " + data.length + " results");
+            if(!data || !data.length) {
+                return;
+            }
+            var sorted = _.sortBy(data, function(item) {
+                return currentLocation.distanceTo(new L.LatLng(item.lat, item.lon));
+            })
+            var closest = sorted[0];
+            var closestLoc = new L.LatLng(closest.lat, closest.lon);
+            console.log("Show " + closest.display_name + " (" + closestLoc + ")");
+            if(closest.boundingbox) {
+                var sw = new L.LatLng(closest.boundingbox[0], closest.boundingbox[2])
+                var ne = new L.LatLng(closest.boundingbox[1], closest.boundingbox[3])
+                var bounds = new L.LatLngBounds(sw, ne);
+                mapService.centerBounds(bounds);
+            } else {
+                mapService.center(closestLoc);
+            }
+        };
+        
+        geoCodingService.searchLocation(address, showClosest);
+    };
 }
-MapCtrl.$inject = ['$scope', '$location', 'mapService'];
+MapCtrl.$inject = ['$scope', '$location', 'mapService', 'geoCodingService'];
 
 function TrackersListCtrl($scope, $location) {
     updateNavi($location, 'page-link-trackers');
