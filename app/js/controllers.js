@@ -24,10 +24,6 @@ function MapCtrl($scope, $location, mapService, geoCodingService, soundService, 
 
     trackerStorage.restoreSelectedTrackers();
 
-    $scope.fetchData = function() {
-        console.log("fetchData:");
-    };
-
     $scope.locateMe = function() {
         console.log("locateMe:");
         mapService.centerOnSelf();
