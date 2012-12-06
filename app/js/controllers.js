@@ -22,6 +22,8 @@ function MapCtrl($scope, $location, mapService, geoCodingService, soundService, 
 
     mapService.open("map-canvas");
 
+    trackerStorage.restoreSelectedTrackers();
+
     $scope.fetchData = function() {
         console.log("fetchData:");
     };
@@ -71,6 +73,8 @@ function TrackersListCtrl($scope, $resource, $location, trackerStorage) {
     updateNavi($location, 'page-link-trackers');
     // need to escape : in port number due angularjs silliness
     var Tracker = $resource('http://198.61.201.6\\:8000/api/v1-dev/trackers');
+
+    trackerStorage.restoreSelectedTrackers();
 
     $scope.selectTracker = function(trackerData) {
         trackerStorage.fetchTrackerEvents(trackerData.tracker.id, trackerData.fetch);

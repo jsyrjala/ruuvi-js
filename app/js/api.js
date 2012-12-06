@@ -36,7 +36,7 @@ var GeoCodingService = function() {
 var TrackerService = function() {
     // TODO inject configuration object
     var baseUrl = 'http://198.61.201.6:8000/api/v1-dev/';
-
+    var configuration = new Configuration();
     this.listTrackers = function(success, error) {
         ajaxGet(baseUrl + "trackers", {}, success, error);
     }
@@ -46,7 +46,7 @@ var TrackerService = function() {
         if(sinceTimestamp) {
             resultsSince = "storeTimeStart=" + Math.round(sinceTimestamp.getTime() / 1000);
         }
-        var url = baseUrl + "trackers/" + trackerId + "/events?" + resultsSince;
+        var url = configuration.ruuvitracker.url + "trackers/" + trackerId + "/events?" + resultsSince;
         ajaxGet(url, {}, success, error);
     };
 
@@ -175,17 +175,34 @@ var TrackerStorage = function() {
     this.fetchTrackerEvents = function(trackerId, state) {
         ensureStructure(trackerId);
         trackers[trackerId].fetch = state;
-        var storedSelections = storageService.fetch('selected-trackers', {});
         if(state) {
             this.pollTrackerEvents(trackerId);
-            storedSelections[trackerId] = 1;
         } else {
             window.clearTimeout(trackers[trackerId].poller);
             trackers[trackerId].poller = undefined;
-            delete storedSelections[trackerId];
         }
-        storageService.store('selected-trackers', storedSelections);
+        this.backupSelectedTrackers();
     };
+
+    this.backupSelectedTrackers = function() {
+        var selected = {};
+        for(var trackerId in trackers) {
+            if(trackers[trackerId].fetch) {
+                selected[trackerId] = 1;
+            }
+        }
+        storageService.store('selected-trackers', selected);
+    }
+
+    this.restoreSelectedTrackers = function() {
+        var selectedTrackers = storageService.fetch('selected-trackers', {});
+        for(var trackerId in selectedTrackers) {
+            ensureStructure(trackerId);
+            trackers[trackerId].fetch = true;
+            this.pollTrackerEvents(trackerId);
+        }
+    }
+
 
     this.pollTrackerEvents = function(trackerId) {
         if(trackers[trackerId].poller) {
