@@ -17,10 +17,19 @@ function FrontCtrl($scope, $location) {
 }
 FrontCtrl.$inject = ['$scope', '$location'];
 
-function MapCtrl($scope, $location, mapService, geoCodingService, soundService) {
+function MapCtrl($scope, $location, mapService, geoCodingService, soundService, trackerService, trackerStorage) {
     updateNavi($location, 'page-link-map');
 
     mapService.open("map-canvas");
+
+    trackerStorage.fetchTracker("2", true);
+    trackerStorage.fetchTracker("3", true);
+    trackerStorage.fetchTracker("4", true);
+
+    $scope.fetchData = function() {
+        console.log("fetchData:");
+    };
+
     $scope.locateMe = function() {
         console.log("locateMe:");
         mapService.centerOnSelf();
@@ -59,7 +68,8 @@ function MapCtrl($scope, $location, mapService, geoCodingService, soundService) 
         geoCodingService.searchLocation(address, showClosest);
     };
 }
-MapCtrl.$inject = ['$scope', '$location', 'mapService', 'geoCodingService', 'soundService'];
+MapCtrl.$inject = ['$scope', '$location', 'mapService', 'geoCodingService', 'soundService', 'trackerService', 
+                   'trackerStorage'];
 
 function TrackersListCtrl($scope, $location, soundService) {
     updateNavi($location, 'page-link-trackers');

@@ -1,7 +1,7 @@
 <div class="container-fluid">
   <div class="row-fluid">
     <button id="locate-me" ng-click="locateMe()" class="btn" title="Center map on my current location">Locate</button>
-    <button id="query" class="btn" title="Click this many times. Look
+    <button id="query" ng-click="fetchData()" class="btn" title="Click this many times. Look
     at Lappeenranta.">Get location data</button>
     <form class="search-form" ng-submit="searchAddress(address)">
       <input type="search" id="location-search" class="search-query"
