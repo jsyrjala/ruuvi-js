@@ -1,15 +1,15 @@
 'use strict';
 
-var MapService = function() {
-    // center of Helsinki
-    var defaultLocation = new L.LatLng(60.168564, 24.941111);
-    var defaultZoom = 13;
+var MapService = function(configuration, storageService) {
     var mapView = undefined;
     var selfLocation = undefined;
     var selfMarker = undefined;
 
+    var paths = {};
+
     // TODO use injecting
-    var storageService = new StorageService();
+    //var storageService = new StorageService();
+    //var configuration = new Configuration();
 
     var createOsmTiles = function() {
         console.log("createTiles:");
@@ -49,7 +49,7 @@ var MapService = function() {
     var loadInitialLocation = function(map, location, timeoutSeconds) {
         console.log("loadInitialLocation:", location);
         var data = storageService.fetch("map-location");
-        var zoom = defaultZoom;
+        var zoom = configuration.defaultZoom;
         // TODO error handling for corrupt data
         if(data) {
             console.log("found existing data", data);
@@ -59,7 +59,7 @@ var MapService = function() {
                 zoom = data.zoom;
             }
         }
-        map.setView(location, zoom || defaultZoom);
+        map.setView(location, zoom || configuration.defaultZoom);
     }
 
     var updateSelfLocation = function(newLocation, accuracy) {
@@ -82,7 +82,7 @@ var MapService = function() {
     var create = function(canvasId, startLocation) {
         console.log("create:" + canvasId);
         var tiles = createOsmTiles();
-        var map = new L.Map(canvasId, {zoom: defaultZoom});
+        var map = new L.Map(canvasId, {zoom: configuration.defaultZoom});
         map.addLayer(tiles);
 
         map.on("locationfound", function(event) {
@@ -113,7 +113,7 @@ var MapService = function() {
         if(mapView) {
             redisplay(canvasId);
         } else {
-            mapView = create(canvasId, startLocation || defaultLocation);
+            mapView = create(canvasId, startLocation || configuration.defaultLocation);
         }
     };
     
@@ -134,7 +134,7 @@ var MapService = function() {
     /* Center map on given location */
     this.center = function(location, zoom) {
         console.log("center:" + location + "," + zoom);
-        mapView.setView(location, zoom || defaultZoom);
+        mapView.setView(location, zoom || configuration.defaultZoom);
     };
 
     /* Center map on give LatLngBounds object */
@@ -162,4 +162,31 @@ var MapService = function() {
         mapView.stopLocate();
     };
 
+    this.eventReceived = function(event) {
+        if(!event.latlng) {
+            // not every event has a location
+            return;
+        }
+        var trackerId = event.tracker_id;
+        var sessionId = event.event_session_id;
+        if(!paths[trackerId]) {
+            paths[trackerId] = {};
+        }
+        if(!paths[trackerId][sessionId]) {
+            paths[trackerId][sessionId] = {};
+        }
+        var session = paths[trackerId][sessionId];
+        if(!session.path) {
+            console.log("Create new path");
+            session.path = new L.Polyline([event.latlng]);
+        } else {
+            console.log("Append to exesiting path");
+            session.path.addLatLng(event.latlng);
+        }
+
+        if(mapView) {
+            session.path.addTo(mapView);
+        }
+    }
 };
+MapService.$inject = ['configuration'];

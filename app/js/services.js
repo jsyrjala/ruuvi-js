@@ -2,15 +2,24 @@
 
 /* Services */
 
+// service => new instance will be created (stateless service)
 
-// Demonstrate how to register services
-// In this case it is a simple value service.
 angular.module('ruuvitracker.services', []).
-    value('version', '0.1').
-    value('', new Configuration()).
-    value('mapService', new MapService()).
-    value('storageService', new StorageService()).
-    value('geoCodingService', new GeoCodingService()).
-    value('soundService', new SoundService()).
-    value('trackerService', new TrackerService()).
-    value('trackerStorage', new TrackerStorage());
+    constant('version', '0.1').
+    constant('configuration', new Configuration()).
+    factory('mapService', ['configuration', 'storageService', 
+                           function(configuration, storageService) {  
+                               return new MapService(configuration, storageService); 
+                           }] ).
+    factory('trackerStorage', ['storageService', 'trackerService', 'mapService',
+                               function(storageService, trackerService, mapService) {
+                                   return new TrackerStorage(storageService, trackerService, mapService);
+                              }] ).
+    factory('trackerService', ['configuration', 
+                               function(configuration) {
+                                   return new TrackerService(configuration);
+                               }] ).
+    service('soundService', SoundService).
+    service('storageService', StorageService).
+    service('geoCodingService', GeoCodingService)
+;

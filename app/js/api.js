@@ -33,12 +33,9 @@ var GeoCodingService = function() {
 };
 
 
-var TrackerService = function() {
-    // TODO inject configuration object
-    var baseUrl = 'http://198.61.201.6:8000/api/v1-dev/';
-    var configuration = new Configuration();
+var TrackerService = function(configuration) {
     this.listTrackers = function(success, error) {
-        ajaxGet(baseUrl + "trackers", {}, success, error);
+        ajaxGet(configuration.ruuvitracker.url + "trackers", {}, success, error);
     }
 
     this.getEvents = function(trackerId, sinceTimestamp, success, error) {
@@ -52,7 +49,7 @@ var TrackerService = function() {
 
     this.createTracker = function(name, code, sharedSecret, demoPassword, success, error) {
         var message = {tracker: {name: name, code: code, shared_secret: sharedSecret}};
-        var url = baseUrl + "trackers";
+        var url = configuration.ruuvitracker.url + "trackers";
         ajaxPost(url, message, success, error);
     };
 
@@ -60,14 +57,33 @@ var TrackerService = function() {
 
 
 // TODO most of this belongs probably to $rootScope
-var TrackerStorage = function() {
-    // TODO inject
-    var storageService = new StorageService();
-    // TODO use injecting
-    var trackerService = new TrackerService();
+var TrackerStorage = function(storageService, trackerService, mapService) {
 
     var trackers = {};
     //trackers.lastTrackerQuery = undefined;
+
+    // TODO used to convert several object types
+    var convertData = function(obj) {
+        console.log(obj);
+        if(obj.created_on) {
+            obj.created_on = new Date(obj.created_on);
+        }
+        if(obj.event_time) {
+            obj.event_time = new Date(obj.event_time);
+        }
+        if(obj.store_time) {
+            obj.store_time = new Date(obj.store_time);
+        }
+        if(obj.latest_activity) {
+            obj.latest_activity = new Date(obj.latest_activity);
+        }
+        var location = obj.location;
+        if(location && location.latitude && location.longitude) {
+            obj.latlng = new L.LatLng(location.latitude, location.longitude);
+            delete obj.location.latitude;
+            delete obj.location.longitude;
+        }
+    };
 
     var ensureStructure = function(trackerId, sessionId) {
         if(!trackerId) {
@@ -89,6 +105,7 @@ var TrackerStorage = function() {
     }
 
     var addTracker = function(tracker) {
+        convertData(tracker);
         var trackerId = tracker.id;
         ensureStructure(trackerId);
         trackers[trackerId].tracker = tracker;
@@ -101,23 +118,8 @@ var TrackerStorage = function() {
         trackers[trackerId].sessions[sessionId].session = session;
     }
 
-    var convertTimestamps = function(obj) {
-        if(obj.created_on) {
-            obj.created_on = new Date(obj.event_created_on);
-        }
-        if(obj.event_time) {
-            obj.event_time = new Date(obj.event_time);
-        }
-        if(obj.store_time) {
-            obj.store_time = new Date(obj.store_time);
-        }
-        if(obj.latest_activity) {
-            obj.latest_activity = new Date(obj.latest_activity);
-        }
-    };
-
     var addEvent = function(event) {
-        convertTimestamps(event);
+        convertData(event);
         var trackerId = event.tracker_id;
         var sessionId = event.event_session_id;
         var eventId = event.id;
@@ -128,6 +130,8 @@ var TrackerStorage = function() {
         if(!trackers[trackerId].latestStoreTime || storeTime > trackers[trackerId].latestStoreTime) {
             trackers[trackerId].latestStoreTime = storeTime;
         }
+
+        mapService.eventReceived(event);
     }
 
     var dedup = function(session) {
@@ -202,7 +206,6 @@ var TrackerStorage = function() {
             this.pollTrackerEvents(trackerId);
         }
     }
-
 
     this.pollTrackerEvents = function(trackerId) {
         if(trackers[trackerId].poller) {

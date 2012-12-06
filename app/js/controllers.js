@@ -83,7 +83,6 @@ function TrackersListCtrl($scope, $resource, $location, trackerStorage) {
             $scope.$apply();
         };
         $scope.trackers = trackerStorage.listTrackers(updateView);
-        console.log($scope.trackers);
     };
 
 }
