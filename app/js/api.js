@@ -34,7 +34,7 @@ var GeoCodingService = function() {
 
 
 var TrackerService = function() {
-    // TODO configure
+    // TODO inject configuration object
     var baseUrl = 'http://198.61.201.6:8000/api/v1-dev/';
 
     this.listTrackers = function(success, error) {
@@ -59,9 +59,16 @@ var TrackerService = function() {
 };
 
 
+// TODO most of this belongs probably to $rootScope
 var TrackerStorage = function() {
+    // TODO inject
+    var storageService = new StorageService();
+    // TODO use injecting
+    var trackerService = new TrackerService();
 
     var trackers = {};
+    //trackers.lastTrackerQuery = undefined;
+
     var ensureStructure = function(trackerId, sessionId) {
         if(!trackerId) {
             return;
@@ -94,17 +101,23 @@ var TrackerStorage = function() {
         trackers[trackerId].sessions[sessionId].session = session;
     }
 
-    var convertEvent = function(event) {
-        if(event.event_time) {
-            event.event_time = new Date(event.event_time);
+    var convertTimestamps = function(obj) {
+        if(obj.created_on) {
+            obj.created_on = new Date(obj.event_created_on);
         }
-        if(event.store_time) {
-            event.store_time = new Date(event.store_time);
+        if(obj.event_time) {
+            obj.event_time = new Date(obj.event_time);
+        }
+        if(obj.store_time) {
+            obj.store_time = new Date(obj.store_time);
+        }
+        if(obj.latest_activity) {
+            obj.latest_activity = new Date(obj.latest_activity);
         }
     };
 
     var addEvent = function(event) {
-        convertEvent(event);
+        convertTimestamps(event);
         var trackerId = event.tracker_id;
         var sessionId = event.event_session_id;
         var eventId = event.id;
@@ -125,8 +138,6 @@ var TrackerStorage = function() {
     }
 
     var updateTracker = function(trackerId, callback) {
-        // TODO use injecting
-        var service = new TrackerService();
         var success = function(data) {
             var sessionIdMap = {};
             var dataReceived = false;
@@ -146,18 +157,34 @@ var TrackerStorage = function() {
             callback(trackerId, dataReceived);
         }
         ensureStructure(trackerId);
-        service.getEvents(trackerId, trackers[trackerId].latestStoreTime, success);            
+        trackerService.getEvents(trackerId, trackers[trackerId].latestStoreTime, success);            
     };
 
-    this.fetchTracker = function(trackerId, state) {
+    /** Fetch trackers, store them to memory and return reference to memory */
+    this.listTrackers = function(dataFetchedCallback) {
+        // TODO check how recent data is
+        function callback(data) {
+            console.log("Found " + data.trackers.length + " trackers");
+            _.each(data.trackers, addTracker);
+            dataFetchedCallback();
+        };
+        trackerService.listTrackers(callback);
+        return trackers;
+    }
+
+    this.fetchTrackerEvents = function(trackerId, state) {
         ensureStructure(trackerId);
         trackers[trackerId].fetch = state;
+        var storedSelections = storageService.fetch('selected-trackers', {});
         if(state) {
             this.pollTrackerEvents(trackerId);
+            storedSelections[trackerId] = 1;
         } else {
             window.clearTimeout(trackers[trackerId].poller);
             trackers[trackerId].poller = undefined;
+            delete storedSelections[trackerId];
         }
+        storageService.store('selected-trackers', storedSelections);
     };
 
     this.pollTrackerEvents = function(trackerId) {
@@ -186,14 +213,4 @@ var TrackerStorage = function() {
         updateTracker(trackerId, callback);
     };
 
-    this.pollTrackersAutomatically = function() {
-        var trackerIds = Object.keys(trackers);
-        var self = this;
-        _.each(trackerIds, function(trackerId) {
-            if(trackers[trackerId].fetch) {
-                console.log("Start fetching data for tracker " + trackerId);
-                self.pollTrackerEvents(trackerId);
-            }
-        });
-    }
-};
+}

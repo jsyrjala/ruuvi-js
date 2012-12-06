@@ -13,11 +13,12 @@
           <th>Activity</th>
         </tr>
       </thead>
-      <tbody>
-        <tr>
-          <td><input type="checkbox" class="tracker-selected" /></td>
-          <td class="tracker-name">Hunting party</td>
-          <td class="tracker-code">3929320021</td>
+      <tbody ng-init="fetchTrackers()">
+        <tr ng-repeat="trackerData in trackers">
+          <td><input type="checkbox" ng-model="trackerData.fetch" ng-change="selectTracker(trackerData)"/></td>
+          <td>{{trackerData.tracker.name}}</td>
+          <td>{{trackerData.tracker.tracker_code}}</td>
+          <td>{{trackerData.tracker.latest_activity}}</td>
       </tbody>
     </table>
     <p>

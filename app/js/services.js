@@ -10,4 +10,6 @@ angular.module('ruuvitracker.services', []).
   value('mapService', new MapService()).
   value('storageService', new StorageService()).
   value('geoCodingService', new GeoCodingService()).
-  value('soundService', new SoundService());
+  value('soundService', new SoundService()).
+  value('trackerService', new TrackerService()).
+  value('trackerStorage', new TrackerStorage());

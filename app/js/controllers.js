@@ -22,10 +22,6 @@ function MapCtrl($scope, $location, mapService, geoCodingService, soundService, 
 
     mapService.open("map-canvas");
 
-    trackerStorage.fetchTracker("2", true);
-    trackerStorage.fetchTracker("3", true);
-    trackerStorage.fetchTracker("4", true);
-
     $scope.fetchData = function() {
         console.log("fetchData:");
     };
@@ -71,10 +67,27 @@ function MapCtrl($scope, $location, mapService, geoCodingService, soundService, 
 MapCtrl.$inject = ['$scope', '$location', 'mapService', 'geoCodingService', 'soundService', 'trackerService', 
                    'trackerStorage'];
 
-function TrackersListCtrl($scope, $location, soundService) {
+function TrackersListCtrl($scope, $resource, $location, trackerStorage) {
     updateNavi($location, 'page-link-trackers');
+    // need to escape : in port number due angularjs silliness
+    var Tracker = $resource('http://198.61.201.6\\:8000/api/v1-dev/trackers');
+
+    $scope.selectTracker = function(trackerData) {
+        trackerStorage.fetchTrackerEvents(trackerData.tracker.id, trackerData.fetch);
+    };
+
+    $scope.fetchTrackers = function() {
+        console.log("fetchTrackers");
+        // update view after trackers have been fetched
+        function updateView() {
+            $scope.$apply();
+        };
+        $scope.trackers = trackerStorage.listTrackers(updateView);
+        console.log($scope.trackers);
+    };
+
 }
-TrackersListCtrl.$inject = ['$scope', '$location', 'soundService'];
+TrackersListCtrl.$inject = ['$scope', '$resource', '$location', 'trackerStorage'];
 
 function CreateTrackerCtrl($scope, $location) {
     updateNavi($location, 'page-link-trackers');
