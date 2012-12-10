@@ -1,6 +1,6 @@
 'use strict';
 
-var MapService = function(configuration, storageService) {
+var MapService = function(configuration, storageService, trackerService) {
     var mapView = undefined;
     var selfLocation = undefined;
     var selfMarker = undefined;
@@ -84,8 +84,11 @@ var MapService = function(configuration, storageService) {
         var tiles = createOsmTiles();
         var map = new L.Map(canvasId, {zoom: configuration.defaultZoom});
         map.addLayer(tiles);
-
+        // TODO use geolocation api instead
+        // leaflet api loses information
         map.on("locationfound", function(event) {
+            console.log("location found", event);
+            trackerService.sendEvent(event);
             updateSelfLocation(event.latlng, event.accuracy);
         });
         map.on("locationerror", function(event) {
@@ -180,7 +183,6 @@ var MapService = function(configuration, storageService) {
             console.log("Create new path");
             session.path = new L.Polyline([event.latlng]);
         } else {
-            console.log("Append to exesiting path");
             session.path.addLatLng(event.latlng);
         }
 

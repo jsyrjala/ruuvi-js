@@ -32,7 +32,7 @@ var GeoCodingService = function() {
     }
 };
 
-
+// TODO inject jquery/ajax thingy
 var TrackerService = function(configuration) {
     this.listTrackers = function(success, error) {
         ajaxGet(configuration.ruuvitracker.url + "trackers", {}, success, error);
@@ -41,7 +41,8 @@ var TrackerService = function(configuration) {
     this.getEvents = function(trackerId, sinceTimestamp, success, error) {
         var resultsSince = "";
         if(sinceTimestamp) {
-            resultsSince = "storeTimeStart=" + Math.round(sinceTimestamp.getTime() / 1000);
+            // TODO should use decimals for millisecs and round up
+            resultsSince = "storeTimeStart=" + Math.ceil(sinceTimestamp.getTime() / 1000);
         }
         var url = configuration.ruuvitracker.url + "trackers/" + trackerId + "/events?" + resultsSince;
         ajaxGet(url, {}, success, error);
@@ -53,6 +54,77 @@ var TrackerService = function(configuration) {
         ajaxPost(url, message, success, error);
     };
 
+    function generateMACBaseString(message) {
+        var keys = [];
+        for(var key in message) {
+	    keys.push(key);
+        }
+        keys.sort();
+        var base = "";
+        for(var i = 0; i < keys.length; i ++) {
+	    var key = keys[i];
+	    base += key + ":" + message[key] +"|"
+        }
+        return base;
+    }
+ 
+    function generateMAC(message, sharedSecret) {
+        var messageBase = generateMACBaseString(message);
+        var hash = CryptoJS.HmacSHA1(messageBase, sharedSecret);
+        return hash.toString(CryptoJS.enc.Hex);
+    }
+
+    function generateJsonMessage(trackerCode, sharedSecret, session, position, message) {
+        // generate on first request, and keep it same for rest of the
+        // session
+        var timestamp = position.timestamp ? new Date(position.timestamp) : new Date();
+        var trackerMessage = {
+	    version: 1,
+	    tracker_code: trackerCode,
+	    time: timestamp.toISOString(),
+	    session_code: session
+        };
+        if(message) {
+	    trackerMessage["X-message"] = message;
+        }
+        
+        function addField(srcObject, destObject, srcField, destField) {
+	    if(srcObject[srcField]) {
+	        destObject[destField] = "" + srcObject[srcField];
+	    }
+        }
+        if(position && position.coords) {
+            // Geolocation API
+	    var c = position.coords;
+	    addField(c, trackerMessage, "latitude", "latitude");
+	    addField(c, trackerMessage, "longitude", "longitude");
+	    // TODO wrong format, decimal expected in server
+            //addField(c, trackerMessage, "altitude", "altitude");
+	    addField(c, trackerMessage, "accuracy", "accuracy");
+	    addField(c, trackerMessage, "heading", "heading");
+	    addField(c, trackerMessage, "speed", "speed");
+	    addField(c, trackerMessage, "altitudeAccuracy", "altitudeAccuracy");
+        } else if(position.latlng) {
+            // leaflet api
+	    addField(position.latlng, trackerMessage, "lat", "latitude");
+	    addField(position.latlng, trackerMessage, "lng", "longitude");
+	    addField(position.accuracy, trackerMessage, "accuracy", "accuracy");
+        }
+        trackerMessage.mac = generateMAC(trackerMessage, sharedSecret);
+        return trackerMessage;
+    }
+
+    var session = "" + new Date().getTime();
+    this.sendEvent = function(event) {
+        var trackerCode = "foobar";
+        var sharedSecret = "foobar";
+
+        var message = generateJsonMessage(trackerCode, sharedSecret, session, event);
+        var url = configuration.ruuvitracker.url + "events";
+        ajaxPost(url, message, function(e) {
+            console.log("Sent message to tracker server");
+        });
+    }
 };
 
 
@@ -64,7 +136,6 @@ var TrackerStorage = function(storageService, trackerService, mapService) {
 
     // TODO used to convert several object types
     var convertData = function(obj) {
-        console.log(obj);
         if(obj.created_on) {
             obj.created_on = new Date(obj.created_on);
         }

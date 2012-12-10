@@ -1,15 +1,12 @@
 'use strict';
 
 /* Services */
-
-// service => new instance will be created (stateless service)
-
 angular.module('ruuvitracker.services', []).
     constant('version', '0.1').
     constant('configuration', new Configuration()).
-    factory('mapService', ['configuration', 'storageService', 
-                           function(configuration, storageService) {  
-                               return new MapService(configuration, storageService); 
+    factory('mapService', ['configuration', 'storageService', 'trackerService',
+                           function(configuration, storageService, trackerService) {  
+                               return new MapService(configuration, storageService, trackerService); 
                            }] ).
     factory('trackerStorage', ['storageService', 'trackerService', 'mapService',
                                function(storageService, trackerService, mapService) {
