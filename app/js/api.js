@@ -210,6 +210,7 @@ var TrackerStorage = function(storageService, trackerService, mapService) {
         tmp.sort(function(a, b) {
             return a.event_time < b.event_time;
         });
+        session.events = tmp;
     }
 
     var updateTracker = function(trackerId, callback) {
