@@ -1,5 +1,46 @@
 'use strict';
 
+// See https://github.com/CloudMade/Leaflet/issues/386
+L.Marker.Compass = L.Marker.extend({    
+    _reset: function() {
+        var pos = this._map.latLngToLayerPoint(this._latlng).round();
+
+        L.DomUtil.setPosition(this._icon, pos);
+        if (this._shadow) {
+            L.DomUtil.setPosition(this._shadow, pos);
+        }
+
+        if (this.options.iconAngle || this.options.iconAngle == 0) {
+            var iconAnchor = this.options.icon.options.iconAnchor;
+
+            var translate1 = ' translate(0px, ' + iconAnchor[1]/2 + 'px) ';
+            var translate2 = ' translate(0px, ' + -iconAnchor[1]/2 + 'px) ';
+
+            this._icon.style.WebkitTransform = this._icon.style.WebkitTransform  + translate1 + ' rotate(' + this.options.iconAngle + 'deg) ' + translate2;
+            this._icon.style.MozTransform = this._icon.style.MozTransform + translate1 + 'rotate(' + this.options.iconAngle + 'deg)' + translate2;
+            this._icon.style.MsTransform = this._icon.style.MsTransform + translate1 + 'rotate(' + this.options.iconAngle + 'deg)' + translate2;
+            this._icon.style.OTransform = this._icon.style.OTransform + translate1 + 'rotate(' + this.options.iconAngle + 'deg)' + translate2;
+        }
+
+        this._icon.style.zIndex = pos.y;
+    },
+
+    setIconAngle: function (iconAngle) {
+
+        if (this._map) {
+            this._removeIcon();
+        }
+
+        this.options.iconAngle = iconAngle;
+
+        if (this._map) {
+            this._initIcon();
+            this._reset();
+        }
+    }
+
+});
+
 var MapService = function(configuration, storageService, trackerService) {
     var mapView = undefined;
     var selfLocation = undefined;
@@ -165,6 +206,22 @@ var MapService = function(configuration, storageService, trackerService) {
         mapView.stopLocate();
     };
 
+    var arrowIcon = new L.Icon({iconUrl: "/img/up-arrow.png",
+                                iconSize: [20, 43],
+                                iconAnchor: [10, 43]});
+
+    var defaultIcon = new L.Icon.Default();
+
+    var angleCounter = 0;
+    var pathIcon = function(heading) {
+        if(heading) {
+            return new L.Icon({iconUrl: "/img/up-arrow.png",
+                                iconSize: [20, 43],
+                                iconAnchor: [10, 43]});
+        }
+        return new L.Icon.Default();
+    };
+
     this.eventReceived = function(event) {
         if(!event.latlng) {
             // not every event has a location
@@ -175,19 +232,36 @@ var MapService = function(configuration, storageService, trackerService) {
         if(!paths[trackerId]) {
             paths[trackerId] = {};
         }
-        if(!paths[trackerId][sessionId]) {
-            paths[trackerId][sessionId] = {};
+        var tracker = paths[trackerId];
+        if(!tracker[sessionId]) {
+            tracker[sessionId] = {};
         }
-        var session = paths[trackerId][sessionId];
+        var session = tracker[sessionId];
         if(!session.path) {
             console.log("Create new path");
             session.path = new L.Polyline([event.latlng]);
         } else {
             session.path.addLatLng(event.latlng);
         }
+        angleCounter ++;
+        angleCounter = angleCounter;
+        var angle = event.heading;
+        if(!tracker.marker) {
+            console.log("Create new marker");
+            // TODO Compass makes slight flashing 
+            tracker.marker = new L.Marker.Compass(event.latlng, {
+                icon: pathIcon(angle)
+            });
+            tracker.marker.setIconAngle(angle);
+        } else {
+            tracker.marker.setLatLng(event.latlng);
+            tracker.marker.setIcon(pathIcon(angle));
+            tracker.marker.setIconAngle(angle);
+        }
 
         if(mapView) {
             session.path.addTo(mapView);
+            tracker.marker.addTo(mapView);
         }
     }
 };
