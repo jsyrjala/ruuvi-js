@@ -206,15 +206,9 @@ var MapService = function(configuration, storageService, trackerService) {
         mapView.stopLocate();
     };
 
-    var arrowIcon = new L.Icon({iconUrl: "/img/up-arrow.png",
-                                iconSize: [20, 43],
-                                iconAnchor: [10, 43]});
-
-    var defaultIcon = new L.Icon.Default();
-
     var pathIcon = function(heading) {
         if(heading) {
-            return new L.Icon({iconUrl: "/img/up-arrow.png",
+            return new L.Icon({iconUrl: "img/up-arrow.png",
                                 iconSize: [20, 43],
                                 iconAnchor: [10, 43]});
         }
