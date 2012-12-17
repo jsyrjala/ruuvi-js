@@ -212,7 +212,6 @@ var MapService = function(configuration, storageService, trackerService) {
 
     var defaultIcon = new L.Icon.Default();
 
-    var angleCounter = 0;
     var pathIcon = function(heading) {
         if(heading) {
             return new L.Icon({iconUrl: "/img/up-arrow.png",
@@ -243,9 +242,8 @@ var MapService = function(configuration, storageService, trackerService) {
         } else {
             session.path.addLatLng(event.latlng);
         }
-        angleCounter ++;
-        angleCounter = angleCounter;
-        var angle = event.heading;
+
+        var angle = event.location.heading;
         if(!tracker.marker) {
             console.log("Create new marker");
             // TODO Compass makes slight flashing 
